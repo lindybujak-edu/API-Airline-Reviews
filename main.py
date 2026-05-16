@@ -5,6 +5,7 @@ from pydantic import BaseModel
 # Load Hugging Face Model Pipeline into memory
 try:
     print("Loading transformer model... This might take a few seconds.")
+    # pipeline() high level API connecting to model
     sentiment_analyzer = pipeline(
         "text-classification",
         model="lindybujak/airline_review_model", 
@@ -35,7 +36,6 @@ async def predict_sentiment(request: ReviewRequest):
     # Run raw text through transformer pipeline
     result = sentiment_analyzer(request.review_text)[0]
 
-
     raw_label = result['label']
     confidence = round(result['score'] * 100, 2)
 
@@ -55,3 +55,23 @@ async def predict_sentiment(request: ReviewRequest):
         "confidence_score": f"{confidence}%",
         "model_type": "DistilBERT Transformer"
     }
+
+# To load: uvicorn main:app --reload
+# To stop: ctrl + C
+
+# Sample test review:
+# I had the worst flight ever. All the flight attendants were rude, and our food was served cold. Do better next time.
+
+test_result = sentiment_analyzer("The flight was horrible. Really bad smells, and the staff was so rude.", top_k=None)
+print(f"First test result (Negative): {test_result}")
+
+test_2_result = sentiment_analyzer(
+    "We had the best flight ever!",
+    top_k=None
+)
+
+print(f"Second test result (positive): {test_2_result}")
+
+print(sentiment_analyzer.model)
+
+print(sentiment_analyzer.model.config)
