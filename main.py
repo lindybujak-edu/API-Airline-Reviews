@@ -68,22 +68,3 @@ async def predict_sentiment(request: ReviewRequest):
 
 # To load: uvicorn main:app --reload
 # To stop: ctrl + C
-
-# Sample test review:
-# I had the worst flight ever. All the flight attendants were rude, and our food was served cold. Do better next time.
-
-# test_result = sentiment_analyzer("The flight was horrible. Really bad smells, and the staff was so rude.", top_k=None)
-# print(f"First test result (Negative): {test_result}")
-
-# test_2_result = sentiment_analyzer(
-#     "We had the best flight ever!",
-#     top_k=None
-# )
-
-# print(f"Second test result (positive): {test_2_result}")
-
-# print(sentiment_analyzer.model)
-
-# print(sentiment_analyzer.model.config)
-
-

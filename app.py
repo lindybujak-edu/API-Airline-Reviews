@@ -16,13 +16,6 @@ review_txt = st.text_area(
     height=2
 )
 
-# Map Hugging Face labels to sentiments
-label_map = {
-    "LABEL_0": "Negative",
-    "LABEL_1": "Neutral",
-    "LABEL_2": "Positive"
-}
-
 # Button to run review through model & print output
 if st.button("Submit"):
     if review_txt.strip() == "":
@@ -39,9 +32,7 @@ if st.button("Submit"):
                 data = response.json()
                 label = data['prediction']
                 score = data['confidence_score']
-                # st.write(f'''
-                #          Sentiment class: {label}\n
-                #          Confidence level: {score}''')
+
                 col1, col2 = st.columns(2)
                 col1.metric("Sentiment", label)
                 col2.metric("Confidence", f"{score}")
