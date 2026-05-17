@@ -8,8 +8,8 @@ try:
     # pipeline() high level API connecting to model
     sentiment_analyzer = pipeline(
         "text-classification",
-        model="lindybujak/airline_review_model", 
-        tokenizer="lindybujak/airline_review_model" 
+        model="lindybujak/airline-review-modified", 
+        tokenizer="lindybujak/airline-review-modified" 
     )
     print("Model loaded successfully!")
 except Exception as e:
@@ -20,6 +20,16 @@ app = FastAPI(
     title="Airline Sentiment Analysis API",
     description="A REST API serving a fine-tuned DistilBERT transformer model.",
     version="1.0.0"
+)
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Input schema (what incoming data should look like)
@@ -62,16 +72,18 @@ async def predict_sentiment(request: ReviewRequest):
 # Sample test review:
 # I had the worst flight ever. All the flight attendants were rude, and our food was served cold. Do better next time.
 
-test_result = sentiment_analyzer("The flight was horrible. Really bad smells, and the staff was so rude.", top_k=None)
-print(f"First test result (Negative): {test_result}")
+# test_result = sentiment_analyzer("The flight was horrible. Really bad smells, and the staff was so rude.", top_k=None)
+# print(f"First test result (Negative): {test_result}")
 
-test_2_result = sentiment_analyzer(
-    "We had the best flight ever!",
-    top_k=None
-)
+# test_2_result = sentiment_analyzer(
+#     "We had the best flight ever!",
+#     top_k=None
+# )
 
-print(f"Second test result (positive): {test_2_result}")
+# print(f"Second test result (positive): {test_2_result}")
 
-print(sentiment_analyzer.model)
+# print(sentiment_analyzer.model)
 
-print(sentiment_analyzer.model.config)
+# print(sentiment_analyzer.model.config)
+
+
