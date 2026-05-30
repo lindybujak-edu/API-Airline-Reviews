@@ -27,7 +27,7 @@ if st.button("Submit"):
 
         try:
             with st.spinner("Communicating to FastAPI backend..."):
-                response = requests.post(api_url, json=payload)
+                response = requests.post(api_url, json=payload, timeout=15)
             if response.status_code == 200:
                 data = response.json()
                 label = data['prediction']
@@ -38,8 +38,124 @@ if st.button("Submit"):
                 col2.metric("Confidence", f"{score}")
             else: 
                 st.write(f"API Returned error: {response.text}")
-                
-        except requests.exceptions.ConnectionError:
-            st.write("Could not connect to API. Ensure API is running (uvicorn main.app --reload)")
-
         
+        except requests.exceptions.RequestException as e:
+            st.error(f"Request failed: {e}")
+
+def render_dict(data_dict):
+    # Inherits font
+    html_content = "<div style='font-family: inherit; line-height: 1.8; font-size: 1rem;'>"
+    
+    for key, value in data_dict.items():
+        # Remove underscores and capitalize
+        clean_key = str(key).replace("_", " ").title()
+        
+        # Set colors
+        if isinstance(value, bool):
+            color = "#B392F0" 
+            val_str = str(value)
+        elif isinstance(value, int):
+            color = "#E28D5C" 
+            val_str = str(value)
+        elif isinstance(value, float):
+            color = "#B5C442"  
+            val_str = str(value)
+        elif isinstance(value, str):
+            color = "#428ACE" 
+            val_str = value
+        elif value is None:
+            color = "#636e7b"
+            val_str = value
+        else:
+            color = "#B392F0"
+            val_str = str(value)
+            
+        html_content += f"<div style='margin-bottom: 4px;'><span style='color: #F0F0F0; margin-right: 8px;'>{clean_key}:</span> <span style='color: {color};'>{val_str}</span></div>"
+    
+    html_content += "</div>"
+    st.markdown(html_content, unsafe_allow_html=True)
+with st.expander("What does the classifier architecture look like?"):
+
+    response = requests.get("http://127.0.0.1:8000/model/info")
+    model_data = response.json()["data"]
+    model_data_minimalistic = {
+        # Base transformer parameters
+        "model_type": model_data.get("model_type"),
+        "number_of_layers": model_data.get("n_layers"),
+        "number_of_heads": model_data.get("n_heads"),
+        "dimensions": model_data.get("dim"),
+        "hidden_dimensions": model_data.get("hidden_dim"),
+        "activation_function": model_data.get("activation"),
+        "dropout": model_data.get("dropout"),
+        "attention_dropout": model_data.get("attention_dropout"),
+        "vocab_size": model_data.get("vocab_size"),
+        "maximum_sequence_length": model_data.get("max_position_embeddings"),
+        
+        # Classification head & task parameters
+        "architecture": model_data.get("architectures")[0] if model_data.get("architectures") else None,
+        "problem_type": model_data.get("problem_type"),
+        "sequence_classification_dropout": model_data.get("seq_classif_dropout"),
+        "padding_token_id": model_data.get("pad_token_id"),
+        "id_to_label": model_data.get("id2label")
+    }
+    
+    
+    st.write("""
+             This architecture uses a base transformer model paired with a 
+             task-specific sequence classification head. Input text is tokenized 
+             and passed through a series of transformer layers to build a 
+             contextual understanding of the sequence (aka the text). Once the 
+             model has this representation, it forms a single summary vector. 
+             It then applies a dropout step to prevent overfitting the training data, 
+             and passes that vector through a final layer to output the predicted 
+             class probabilities."
+             """)
+    st.write("Below are the core technical specifications and structural parameters of this fine-tuned model:  ")
+
+    render_dict(model_data_minimalistic)
+    
+    # The longer version of model_data is formatted as such:
+
+        # {
+        # "vocab_size":30522
+        # "max_position_embeddings":512
+        # "sinusoidal_pos_embds":false
+        # "n_layers":6
+        # "n_heads":12
+        # "dim":768
+        # "hidden_dim":3072
+        # "dropout":0.1
+        # "attention_dropout":0.1
+        # "activation":"gelu"
+        # "initializer_range":0.02
+        # "qa_dropout":0.1
+        # "seq_classif_dropout":0.2
+        # "pad_token_id":0
+        # "eos_token_id":NULL
+        # "bos_token_id":NULL
+        # "tie_word_embeddings":true
+        # "return_dict":true
+        # "output_hidden_states":false
+        # "dtype":"float32"
+        # "chunk_size_feed_forward":0
+        # "is_encoder_decoder":false
+        # "architectures":[
+        # 0:"DistilBertForSequenceClassification"
+        # ]
+        # "id2label":{
+        # "0":"LABEL_0"
+        # "1":"LABEL_1"
+        # "2":"LABEL_2"
+        # }
+        # "label2id":{
+        # "LABEL_0":0
+        # "LABEL_1":1
+        # "LABEL_2":2
+        # }
+        # "problem_type":"single_label_classification"
+        # "_name_or_path":"lindybujak/airline-review-modified"
+        # "transformers_version":"5.0.0"
+        # "model_type":"distilbert"
+        # "tie_weights_":true
+        # "output_attentions":false
+        # }

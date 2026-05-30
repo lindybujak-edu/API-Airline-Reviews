@@ -1,6 +1,11 @@
 from transformers import pipeline
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from transformers import AutoConfig
+
+# To load: fastapi dev main.py  | or |  fastapi run main.py
+# In second terminal: streamlit run app.py
+# To stop: ctrl + C
 
 # Load Hugging Face Model Pipeline into memory
 try:
@@ -11,6 +16,8 @@ try:
         model="lindybujak/airline-review-modified", 
         tokenizer="lindybujak/airline-review-modified" 
     )
+    # Load settings file
+    config = AutoConfig.from_pretrained("lindybujak/airline-review-modified").to_dict()
     print("Model loaded successfully!")
 except Exception as e:
     raise RuntimeError(f"Failed to load model. Error: {str(e)}")
@@ -46,16 +53,8 @@ async def predict_sentiment(request: ReviewRequest):
     # Run raw text through transformer pipeline
     result = sentiment_analyzer(request.review_text)[0]
 
-    raw_label = result['label']
+    sentiment_label = result['label']
     confidence = round(result['score'] * 100, 2)
-
-    # Map Hugging Face labels to sentiments
-    label_map = {
-        "LABEL_0": "Negative",
-        "LABEL_1": "Neutral",
-        "LABEL_2": "Positive"
-    }
-    sentiment_label = label_map.get(raw_label, raw_label)
 
     # Return JSON
     return {
@@ -66,5 +65,11 @@ async def predict_sentiment(request: ReviewRequest):
         "model_type": "DistilBERT Transformer"
     }
 
-# To load: uvicorn main:app --reload
-# To stop: ctrl + C
+# Get method for model details 
+# Note: Simple - can be improved upon by adding different model options for user to select
+@app.get("/model/info")
+async def read_model_info():
+    return {
+        "status":200,
+        "data": config
+    }
